@@ -22,7 +22,8 @@
             android:layout_marginTop="24dp"
             android:layout_marginHorizontal="16dp"
             style="@style/Widget.Material3.CardView.Elevated"
-            app:cardElevation="5dp"
+            app:cardElevation="4dp"
+
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <LinearLayout
@@ -112,6 +113,7 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnAddDevice"
         style="@style/btnStyle"
+        android:textSize="15sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginRight="20dp"
