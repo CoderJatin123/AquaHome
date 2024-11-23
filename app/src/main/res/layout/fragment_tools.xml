@@ -12,7 +12,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/recyclerView"
+        android:visibility="gone"
         android:layout_weight="1"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:id="@+id/errorMsg"
+        android:text="No time Sheduled"
+        android:textSize="15sp"
+        android:gravity="center" />
 
     <com.google.android.material.button.MaterialButton
         style="@style/btnStyle"
