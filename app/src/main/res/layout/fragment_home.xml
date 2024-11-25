@@ -38,19 +38,20 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="No device selected"
-                        android:textSize="18sp"
+                        android:text=""
+                        android:textSize="22sp"
                         android:id="@+id/deviceStatus" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Unknown device"
+                        android:text=""
                         android:layout_marginTop="4dp"
-                        android:textSize="14sp"
-                        android:alpha=".7"
+                        android:textSize="16sp"
+                        android:alpha=".9"
                         android:id="@+id/deviceInfo" />
                 </LinearLayout>
                 <ImageView
+                    android:id="@+id/bt_icon"
                     android:layout_width="40dp"
                     android:layout_height="50dp"
                     android:src="@drawable/ic_bt" />
@@ -88,14 +89,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="50 %"
-                    android:layout_marginTop="4dp"
+                    android:text="-- %"
+                    android:layout_marginVertical="10dp"
                     android:textSize="36sp"
                     android:textStyle="bold"
                     android:id="@+id/waterLevel" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:layout_marginTop="6dp"
+
                     android:id="@+id/refreshBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

@@ -1,37 +1,42 @@
 package com.application.aquahome.activities
 
 import android.bluetooth.BluetoothManager
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.application.aquahome.R
+import com.application.aquahome.MyApplication
 import com.application.aquahome.adapter.BluetoothDeviceAdapter
 import com.application.aquahome.databinding.ActivityAddSensorBinding
-import com.application.aquahome.manager.HCSensorManager
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlin.math.log
 
 class AddSensorActivity : AppCompatActivity() {
     lateinit var binding: ActivityAddSensorBinding
 
-    val adapter = BluetoothDeviceAdapter(HCSensorManager()){ bluetoothDevice ->
 
-    }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding=ActivityAddSensorBinding.inflate(layoutInflater)
         val viewModel = ViewModelProvider(this)[AddActivityViewModel::class]
         setContentView(binding.root)
+        val adapter = BluetoothDeviceAdapter((application as MyApplication).sensorManager){ device->
+
+            (application as MyApplication).let {
+                it.sensorViewModel.onSensorConnected(device)
+            }
+            binding.btnDone.isEnabled=true
+
+        }
+
+
         binding.recyclerView.layoutManager=LinearLayoutManager(this)
         binding.recyclerView.adapter=adapter
 

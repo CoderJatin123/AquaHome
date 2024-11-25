@@ -9,12 +9,11 @@ import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 import com.application.aquahome.R
-import com.application.aquahome.manager.BTUtils
 import com.application.aquahome.manager.HCSensorManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
 
-class BluetoothDeviceAdapter(val sensorManager :HCSensorManager, val onSuccessfulConnection: (BluetoothSocket)->Unit): RecyclerView.Adapter<BluetoothDeviceAdapter.ViewHolder>() {
+class BluetoothDeviceAdapter(val sensorManager :HCSensorManager, val onSuccessfulConnection: (BluetoothDevice)->Unit): RecyclerView.Adapter<BluetoothDeviceAdapter.ViewHolder>() {
     val deviceList  = ArrayList<BluetoothDevice>()
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
@@ -37,16 +36,18 @@ class BluetoothDeviceAdapter(val sensorManager :HCSensorManager, val onSuccessfu
         val device = deviceList[position]
         try {
             holder.title.text = device.name
-        }catch (e: SecurityException){ }
+        }catch (e: SecurityException){
+            holder.title.text="Unknown device"
+        }
 
         holder.itemView.setOnClickListener {
-
+            holder.connectText.text="Connecting..."
             if (!sensorManager.isConnected) {
                 sensorManager.connect(device, Onsuccess = {
                     holder.connectText.text = "Connected"
-                    sensorManager.socket?.let { it1 -> onSuccessfulConnection(it1) }
+                    sensorManager.socket?.let { it1 -> onSuccessfulConnection(device) }
                 }, failed = {
-                    holder.connectText.text = it
+                    holder.connectText.text ="Failed to connnect"
                 })
             }else{
                 sensorManager.disconnect()

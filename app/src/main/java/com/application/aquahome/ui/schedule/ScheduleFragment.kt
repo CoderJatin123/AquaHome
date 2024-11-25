@@ -1,4 +1,4 @@
-package com.application.aquahome.ui.tools
+package com.application.aquahome.ui.schedule
 
 import android.app.TimePickerDialog
 import android.icu.util.Calendar
@@ -6,23 +6,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.application.aquahome.MainActivity
 import com.application.aquahome.MyApplication
 import com.application.aquahome.adapter.ScheduledTimeStampAdapter
-import com.application.aquahome.databinding.FragmentToolsBinding
+import com.application.aquahome.databinding.FragmentScheduleBinding
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class ToolsFragment : Fragment() {
+class ScheduleFragment : Fragment() {
 
-    private var _binding: FragmentToolsBinding? = null
+    private var _binding: FragmentScheduleBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -36,7 +33,7 @@ class ToolsFragment : Fragment() {
         val hour = c.get(Calendar.HOUR_OF_DAY)
         val minute = c.get(Calendar.MINUTE)
 
-        _binding = FragmentToolsBinding.inflate(inflater, container, false)
+        _binding = FragmentScheduleBinding.inflate(inflater, container, false)
         val adapter = context?.let {
             ScheduledTimeStampAdapter(it, deleteWorker = {key->
                 toolsViewModel.deleteWorker(key)

@@ -1,10 +1,18 @@
 package com.application.aquahome.manager
 
+import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.util.Log
+import com.application.aquahome.model.BTSensor
+import com.application.aquahome.model.HCBluetooth
+import com.application.aquahome.model.WaterLevel
 import com.application.aquahome.model.WorkerModel
+import com.application.aquahome.util.BluetoothDeviceConverter
+import com.application.aquahome.util.BluetoothDeviceSerializer
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
 
 class LocalStorageManager(val cxt: Context) {
 
@@ -61,22 +69,17 @@ class LocalStorageManager(val cxt: Context) {
                     }
                 }
                 result=true
-                Log.d("TAG", "getListOfWorkers: s")
-
             }
         } catch (e: Exception) {
             result=false
             error=e.message.toString()
-            Log.d("TAG", "getListOfWorkers: ${e.message}")
             e.localizedMessage?.let { fail(it) }
         } finally {
             if(result)
                 success(myList)
             else
                 fail(error)
-//            realDb.close()
         }
-
     }
 
     fun deleteWorker(key: String,success:()->Unit, fail:(String)->Unit){
@@ -99,6 +102,93 @@ class LocalStorageManager(val cxt: Context) {
                 success()
             else
                 fail(error)
+        }
+    }
+
+    fun addSensor(device: BluetoothDevice, success: () -> Unit, fail: () -> Unit) {
+        var result = false
+        try {
+            realDb.executeTransaction { realm ->
+                val obj = BTSensor()
+                val hcb=HCBluetooth(device)
+                val json = Json {
+                    serializersModule = SerializersModule {
+                        contextual(BluetoothDevice::class, BluetoothDeviceSerializer)
+                    }
+                }
+                val hcbster=json.encodeToString(HCBluetooth.serializer(),hcb)
+                obj.sensor= hcbster
+                realm.where(BTSensor::class.java).findAll().deleteAllFromRealm()
+                realm.insertOrUpdate(obj)
+                result = true
+            }
+        } catch (e: Exception) {
+            result = false
+            e.localizedMessage?.let { fail() }
+        } finally {
+            if (result)
+                success()
+            else
+                fail()
+        }
+    }
+
+    fun getSensor(device: (BluetoothDevice) -> Unit, fail: (String) -> Unit){
+        var error =""
+        var result = false
+        var sensor: BluetoothDevice? = null
+        try {
+            realDb.executeTransaction { realm ->
+                val s = realm.where(BTSensor::class.java).findAll().first()
+
+                val json = Json {
+                    serializersModule = SerializersModule {
+                        contextual(BluetoothDevice::class, BluetoothDeviceSerializer)
+                    }
+                }
+
+                sensor = json.decodeFromString<HCBluetooth>(s!!.sensor).sensor
+                result = true
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            result = false
+            e.localizedMessage?.let {
+                error=it
+            }
+        } finally {
+            if (result)
+                sensor?.let { device(it) }
+            else
+                fail(error)
+        }
+    }
+
+    fun updateWaterLevel(waterLevel: WaterLevel){
+        val currentTime = System.currentTimeMillis()
+        val fortyEightHoursAgo = currentTime - 48 * 60 * 60 * 1000
+
+        try {
+            realDb.executeTransaction { realm ->
+                realm.where(WaterLevel::class.java)
+                    .lessThan("time", fortyEightHoursAgo)
+                    .findAll()
+                    .deleteAllFromRealm()
+                realm.insertOrUpdate(waterLevel)
+            }
+        }catch (_: Exception){
+
+        }
+    }
+
+    fun getWaterLevels(waterLevels:(List<WaterLevel>)->Unit,fail: () -> Unit){
+        try {
+            realDb.executeTransaction { realm ->
+                val s = realm.where(WaterLevel::class.java).findAll().sort("time").toList()
+                waterLevels(s)
+            }
+        }catch (_: Exception){
+            fail()
         }
     }
 }

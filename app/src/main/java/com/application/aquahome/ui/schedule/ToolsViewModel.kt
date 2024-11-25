@@ -1,4 +1,4 @@
-package com.application.aquahome.ui.tools
+package com.application.aquahome.ui.schedule
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

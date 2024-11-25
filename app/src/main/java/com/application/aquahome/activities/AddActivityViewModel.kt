@@ -7,7 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.application.aquahome.manager.BTUtils
+import com.application.aquahome.manager.HCSensorManager
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 
@@ -18,7 +18,7 @@ class AddActivityViewModel(): ViewModel() {
     val deviceList : LiveData<List<BluetoothDevice>> = _deviceList
 
     fun updateList(manager: BluetoothManager){
-        BTUtils.getDeviceList(manager, success = {
+        HCSensorManager.getDeviceList(manager, success = {
             _deviceList.value=it
         }, failed = {
             generateMessage(it)

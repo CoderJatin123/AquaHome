@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     id("kotlin-kapt")
     id("realm-android")
+    kotlin("plugin.serialization") version "2.0.21"
+
 }
 
 android {
@@ -57,4 +59,11 @@ dependencies {
 
     implementation("androidx.work:work-runtime-ktx:2.8.1")
     implementation("io.realm:realm-gradle-plugin:10.19.0")
+    implementation("com.google.code.gson:gson:2.11.0")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("com.karumi:dexter:6.2.3")
+    implementation("com.diogobernardino:williamchart:3.10.1")
+
+
 }

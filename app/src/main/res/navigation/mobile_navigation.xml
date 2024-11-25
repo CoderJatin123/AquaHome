@@ -18,8 +18,8 @@
         tools:layout="@layout/fragment_dashboard" />
 
     <fragment
-        android:id="@+id/navigation_tools"
-        android:name="com.application.aquahome.ui.tools.ToolsFragment"
-        android:label="@string/tools"
-        tools:layout="@layout/fragment_tools" />
+        android:id="@+id/navigation_schedule"
+        android:name="com.application.aquahome.ui.schedule.ScheduleFragment"
+        android:label="@string/schedule"
+        tools:layout="@layout/fragment_schedule" />
 </navigation>

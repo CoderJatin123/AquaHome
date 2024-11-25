@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".ui.tools.ToolsFragment">
+    tools:context=".ui.schedule.ScheduleFragment">
 
     <androidx.recyclerview.widget.RecyclerView
         android:padding="12dp"
@@ -33,7 +33,7 @@
         android:backgroundTint="@color/md_theme_primary"
         android:paddingHorizontal="28dp"
         android:paddingVertical="14dp"
-        android:text="Add Time"
+        android:text="Add schedule"
         android:textSize="15sp"
         android:layout_gravity="right"
         android:id="@+id/addTimeBtn"
