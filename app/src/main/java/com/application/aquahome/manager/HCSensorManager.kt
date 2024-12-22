@@ -4,36 +4,46 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
-import android.hardware.Sensor
+import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.application.aquahome.util.CurrentBTDevice
-import java.nio.charset.Charset
 import java.util.UUID
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
-class HCSensorManager {
+class HCSensorManager() {
 
     var isConnected= false
     var socket: BluetoothSocket? =null
-
+    val socketListener = SocketListener()
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+
     fun connect(device: BluetoothDevice, Onsuccess:()->Unit, failed: (String)->Unit){
         if(!isConnected) {
             connectDevice(device, success = {
                 socket = it
-                handShake(socket!!, success={
-                    isConnected = true
-                    Onsuccess()
-                }, failed={
-                    failed("Device not recognized")
-                    isConnected=false
-                })
+                Log.d("TAG", "connect: device is connected.")
 
+                handler.postDelayed({
+                        Log.d("TAG", "handshake initiated.")
+                    handShake(socket!!, success={
+                        isConnected = true
+                        socketListener.isConnected=true
+                        Onsuccess()
+                    }, failed={
+                        Log.d("TAG", "connect: f1")
+                        failed("Device not recognized")
+                        isConnected=false
+                    })
+                }, 1000)
             }, failed = {
+
+                Log.d("TAG", "connect: f2")
                 isConnected = false
+                socketListener.isConnected=false
                 socket = null
                 failed(it)
             })
@@ -54,6 +64,8 @@ class HCSensorManager {
                     val receivedMessage = String(buffer, 0, bytes)
 
                     val value = receivedMessage.trim().toIntOrNull()
+
+                    Log.d("TAG", "getWaterLevel: $value")
                     if (value != null && value!=-1) {
                         data(value)
                     } else {
@@ -77,9 +89,7 @@ class HCSensorManager {
             e.printStackTrace()
             failed("failed to connect")
         }
-
     }
-
 
     fun disconnect(){
         socket?.close()
@@ -132,9 +142,8 @@ class HCSensorManager {
                 while (!isReceived) {
                     if (socket.inputStream.available() > 0) {
                         bytes=socket.inputStream.read(buffer)
-                        val receivedMessage = String(buffer, 0, bytes)
+                        val receivedMessage = String(buffer, 0, bytes, Charsets.UTF_8).trim()
                         val normalizedMessage = receivedMessage.trim()
-//                     socket.inputStream.reset()
                         if (normalizedMessage == "HELLOG") {
                             success()
                             isReceived = true
@@ -145,20 +154,60 @@ class HCSensorManager {
                         }
                         isReceived=true
                         break
+                    }else{
+                        Log.d("TAG", "handShake: i am waiting")
                     }
                 }
-
                 handler.postDelayed({
                     if (!isReceived) {
                         isReceived=true
                         failed()
                     }
-                }, 3000)
+                }, 5000)
 
 
             }catch (e : Exception) {
                 e.printStackTrace()
                 failed()
+            }
+        }
+    }
+    class SocketListener(){
+        var isConnected = false
+        var isTaskCompleted = false
+        private val executer: ExecutorService = Executors.newSingleThreadExecutor()
+
+        fun startListening(socket: BluetoothSocket, onOverFlow:()->Unit,failed: (String) -> Unit){
+            val buffer = ByteArray(1024)
+            var bytes: Int
+            executer.execute {
+                run {
+                    try {
+                        socket.outputStream?.write("LISTEN_FOR_OVERFLOW".toByteArray())
+                        if(!isConnected){
+                            failed("Sensor not connected")
+//                            isTaskCompleted=true
+                        }
+                        isTaskCompleted = false
+                        Log.d("TAG", "startListenForOverflow: VM $isTaskCompleted $isConnected")
+                        while (isConnected && !isTaskCompleted) {
+                            Log.d("TAG", "I am listening: ")
+                            if (socket.inputStream.available() > 0) {
+                                bytes = socket.inputStream.read(buffer)
+                                val receivedMessage = String(buffer, 0, bytes, Charsets.UTF_8).trim()
+                                val normalizedMessage = receivedMessage.trim()
+                                 if(normalizedMessage=="WATER_OVERFLOW")
+                                     onOverFlow()
+                                 else
+//                                     failed("Some error occurred with sensor")
+                                 isTaskCompleted=true
+                            }
+                        }
+                    }catch (e:Exception){
+                        isTaskCompleted=true
+                        failed(e.printStackTrace().toString())
+                    }
+                }
             }
         }
     }

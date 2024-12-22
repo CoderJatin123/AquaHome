@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.application.aquahome.manager.AppNotificationManager
 import com.application.aquahome.manager.HCSensorManager
 import com.application.aquahome.manager.LocalStorageManager
 import com.application.aquahome.util.SensorStatus
@@ -21,7 +22,11 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 
-class SensorViewModel(private val storageManager: LocalStorageManager, private val sensorManager: HCSensorManager) : ViewModel()  {
+class SensorViewModel(
+    private val storageManager: LocalStorageManager,
+    private val sensorManager: HCSensorManager,
+    private val notificationManager: AppNotificationManager
+) : ViewModel()  {
     private val _msgFlow = MutableSharedFlow<String>()
     val msgFlow: SharedFlow<String> = _msgFlow
     private val _waterLevel = MutableLiveData<Int>().apply { this.value = 0 }
@@ -53,9 +58,6 @@ class SensorViewModel(private val storageManager: LocalStorageManager, private v
     }
 
     fun onSensorConnected(device: BluetoothDevice) {
-
-
-
         this.device= device
         saveSensor()
         updateName(device)
@@ -173,30 +175,45 @@ class SensorViewModel(private val storageManager: LocalStorageManager, private v
     }
 
     fun onAddBtnClick(openAddSensorActivity:()->Unit) {
-        Log.d("TAG", "onAddBtnClick: $device")
+//        Log.d("TAG", "onAddBtnClick: $device")
         when (sensorStatus.value) {
             SensorStatus.NOT_SELECTED -> openAddSensorActivity()
             SensorStatus.CONNECTED -> disconnect()
             SensorStatus.DISCONNECTED -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-
                 device?.let { reConnect(it) }
             }
-
             SensorStatus.CONNECTING -> {
-
             }
-
             else -> {
-
             }
         }
     }
     fun isBluetoothEnabled(): Boolean {
         val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
         val isEnabled = bluetoothAdapter != null && bluetoothAdapter.isEnabled
-        Log.d("TAG", "Bluetooth Enabled: $isEnabled")
         return isEnabled
     }
 
+    fun startListenForOverflow(onOverFlow:()->Unit): Boolean{
+        if(sensorStatus.value==SensorStatus.CONNECTED && sensorManager.socket!=null){
+            sensorManager.socketListener.isConnected=true
+            sensorManager.socketListener.startListening(sensorManager.socket!!, onOverFlow = { ->
+                    _waterLevel.value=10;
+                    createMsg("Water Tank Full! Please check if the motor should be turned off to prevent overflow.")
+                    notificationManager.postNotification("Water Tank Full!",
+                        "The tank is at full capacity.",
+                        "Your water tank has reached 100% capacity. Please check if the motor should be turned off to prevent overflow.")
 
+            }, failed = {
+                createMsg(it)
+            })
+            return true
+        }else{
+            createMsg("Sensor not connected")
+            return false
+        }
+    }
+    fun cancelListenOverflow(){
+        sensorManager.socketListener.isTaskCompleted=true
+    }
 }

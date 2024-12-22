@@ -2,6 +2,7 @@ package com.application.aquahome.ui.home
 
 import android.content.Intent
 import android.content.res.Resources
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -9,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -43,6 +45,7 @@ class HomeFragment : Fragment() {
                         it.deviceInfo.text="Unknown device"
                         it.deviceStatus.text="No device selected"
                         it.btnAddDevice.text="Add device"
+                        it.notifyOverflowToggle.isEnabled=false
                     }
                 }
                 SensorStatus.CONNECTED -> {
@@ -51,6 +54,7 @@ class HomeFragment : Fragment() {
                         it.deviceStatus.text="Connected"
                         it.btIcon.setImageResource(R.drawable.ic_bt_connected)
                         it.btnAddDevice.text="Disconnect"
+                        it.notifyOverflowToggle.isEnabled=true
                     }
                 }
                 SensorStatus.DISCONNECTED -> {
@@ -59,11 +63,13 @@ class HomeFragment : Fragment() {
                         it.deviceInfo.text= "Device Name : ${viewModel.deviceName}"
                         it.btnAddDevice.text="Connect"
                         it.btIcon.setImageResource(R.drawable.ic_bt)
+                        it.notifyOverflowToggle.isEnabled=false
                     }
                 }
                 SensorStatus.CONNECTING -> {
                     Log.d("TAG", "onCreateView: connecting")
                     binding.let {
+                        it.notifyOverflowToggle.isEnabled=false
                         it.deviceStatus.text="Connecting..."
                         it.deviceInfo.text= "Device Name : ${viewModel.deviceName}"
                     }
@@ -71,9 +77,20 @@ class HomeFragment : Fragment() {
             }
         }
 
-        viewModel.waterLevel.observe(viewLifecycleOwner){
-            binding.waterLevel.text = "${it*10}%"
+        viewModel.waterLevel.observe(viewLifecycleOwner) {
+            val waterLevelPercentage = it * 10
+            binding.waterLevel.text = "$waterLevelPercentage%"
+            binding.waterProgress.setProgress(waterLevelPercentage, true)
+
+            // Set indicator color based on water level
+            when (it) {
+                in 8..10 -> binding.waterProgress.setIndicatorColor(resources.getColor(R.color.green))
+                5 -> binding.waterProgress.setIndicatorColor(resources.getColor(R.color.yellow))
+                in 0..3 -> binding.waterProgress.setIndicatorColor(Color.RED)
+                else -> binding.waterProgress.setIndicatorColor(Color.GREEN)
+            }
         }
+
 
         binding.btnAddDevice.setOnClickListener {
              if(viewModel.sensorStatus.value==SensorStatus.CONNECTED){
@@ -82,12 +99,21 @@ class HomeFragment : Fragment() {
             viewModel.onAddBtnClick(openAddSensorActivity = {
                 startActivity(Intent(context,AddSensorActivity::class.java))
             })
-
         }
 
         binding.refreshBtn.setOnClickListener {
             binding.waterLevel.text="-- %"
             viewModel.updateWaterLevel()
+        }
+
+        binding.notifyOverflowToggle.setOnCheckedChangeListener { buttonView, isChecked ->
+            if(isChecked)
+                if(!viewModel.startListenForOverflow(onOverFlow = {
+//                        binding.notifyOverflowToggle.isChecked=false
+                    }))
+                    binding.notifyOverflowToggle.isChecked=false
+            else
+                viewModel.cancelListenOverflow()
         }
         return root
     }
